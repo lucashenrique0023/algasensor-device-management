@@ -8,6 +8,7 @@ import lab.lhss.algasensor.device.management.domain.model.Sensor;
 import lab.lhss.algasensor.device.management.domain.model.SensorId;
 import lab.lhss.algasensor.device.management.domain.repository.SensorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -21,6 +22,27 @@ import org.springframework.web.server.ResponseStatusException;
 public class SensorController {
 
     private final SensorRepository sensorRepository;
+
+    @PutMapping("/{sensorId}")
+    public SensorOutput update(@PathVariable TSID sensorId, @RequestBody SensorInput input) {
+        Sensor sensor = sensorRepository.findById(new SensorId(sensorId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        BeanUtils.copyProperties(input, sensor, "id");
+
+        sensor = sensorRepository.saveAndFlush(sensor);
+
+        return convertToModel(sensor);
+    }
+
+    @DeleteMapping("/{sensorId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remove(@PathVariable TSID sensorId) {
+        Sensor sensor = sensorRepository.findById(new SensorId(sensorId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        sensorRepository.delete(sensor);
+    }
 
     @GetMapping
     public Page<SensorOutput> search(@PageableDefault Pageable pageable) {
