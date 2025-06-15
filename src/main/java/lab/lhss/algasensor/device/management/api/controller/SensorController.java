@@ -8,6 +8,9 @@ import lab.lhss.algasensor.device.management.domain.model.Sensor;
 import lab.lhss.algasensor.device.management.domain.model.SensorId;
 import lab.lhss.algasensor.device.management.domain.repository.SensorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,6 +22,12 @@ public class SensorController {
 
     private final SensorRepository sensorRepository;
 
+    @GetMapping
+    public Page<SensorOutput> search(@PageableDefault Pageable pageable) {
+        Page<Sensor> sensors = sensorRepository.findAll(pageable);
+        return sensors.map(this::convertToModel);
+    }
+
     @GetMapping("{sensorId}")
     public SensorOutput getOne(@PathVariable TSID sensorId) {
         Sensor sensor = sensorRepository.findById(new SensorId(sensorId))
@@ -29,7 +38,7 @@ public class SensorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SensorOutput create(@RequestBody SensorInput input) {
-        var sensor = Sensor.builder()
+        Sensor sensor = Sensor.builder()
                 .id(new SensorId(IdGenerator.generateTSID()))
                 .name(input.getName())
                 .ip(input.getIp())
